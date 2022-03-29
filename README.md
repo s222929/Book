@@ -1,17 +1,17 @@
 # Book
 
-## Structure of single opinion
+## Single opinion structure
 |Element|Selector|Variable|
 |-------|--------|--------|
-|review|li.review_list_new_item_block|
-|subject||
-|pros||
-|cons||
-|score||
-|review date||
-|review language||
-|author||
-|country||
-|room type||
-|guest type||
-|staying||
+|Opinion|div.js_product-review||
+|Opinion id|||
+|Author|||
+|Recommendation|||
+|Stars score|||
+|Content|||
+|List of advantagess|||
+|List of disadvantagess|||
+|Date of posting opinion|||
+|Date of purchasing product|||
+|For how many users useful|||
+|For how many users useless|||

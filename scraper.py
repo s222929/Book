@@ -1,11 +1,13 @@
 import requests
 from bs4 import BeautifulSoup
 
-url = "https://www.booking.com/hotel/pl/happy-tower.pl.html#tab-reviews"
+url = "https://www.ceneo.pl/45863470#tab-reviews"
 response = requests.get(url)
 
-page_dom = BeautifulSoup(response.txt, 'html.parser')
 
-reviews = page_dom.select("li.review_new_item_blockp")
+page_dom = BeautifulSoup(response.text, "html.parser")
 
+opiniaons = page_dom.select("div.js_product-review")
+opinion = opinions.pop()
+print(opinion.prettify())
 
