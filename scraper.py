@@ -1,48 +1,54 @@
-import json
-import requests
 from bs4 import BeautifulSoup
+import requests
+import json
 
-url = "https://www.ceneo.pl/45863470#tab-reviews"
-
-response = requests.get(url)
-
-
-page_dom = BeautifulSoup(response.text, "html.parser")
-
-opinions = page_dom.select("div.js_product-review")
-all_opinions=[]
-for opinion in opinions:
-
-    opinion_id = opinion["data-entry-id"]
-    author = opinion.select_one("span.user-post__author-name").text.strip()
+def get_element(parent, selector, attribute = None, return_list = False):
     try:
-        rcmd = opinion.select_one("span.user-post__author-name").text.strip()
-    except AttributeError:
-        rcmd = None
-    score = opinion.select_one("span.user-post__score-count").text.strip()
-    content = opinion.select_one("div.user-post__text").text.strip()
-    posted_on = opinion.select_one("span.user-post__published > time:nth-child(1)")["datetime"]
-    bought_on = opinion.select_one("span.user-post__published > time:nth-child(2)")["datetime"]
-    useful_for = opinion.select_one("button.vote-yes > span").text.strip()
-    useless_for = opinion.select_one("button.vote-no > span").text.strip()
-    pros = opinion.select("div.review-feature__item--positives ~ div.review-feature__item")
-    pros = [item.text.strip() for item in pros]
-    cons = opinion.select("div.review-feature__item--negatives ~ div.review-feature__item")
-    cons = [item.text.strip() for item in cons]
+        if return_list:
+            return [item.text.strip() for item in parent.select(selector)]
+        if attribute:
+            return parent.select_one(selector)[attribute]
+        return parent.select_one(selector).text.strip()
+    except (AttributeError, TypeError):
+        return None
 
-    single_opinion ={
-        "opinion_id": opinion_id.
-        "author": author.
-        "rcmd": rcmd.
-        "content": content.
-        "posted_on": posted_on.
-        "bought_on": bought_on.
-        "useful_for": useful_for.
-        "useless_for": useless_for.
-        "pros": pros.
-        "cons": cons.
-    }
-    all_opinions.append(single_opinion)
-  
-print(json.dumps(single_opinion, intent=1, ensure_ascii=False))
+opinion_elements = {
+    "author":["span.user-post__author-name"],
+    "rcmd": ["span.user-post__author-recomendation > em"],
+    "score": ["span.user-post__score-count"],
+    "content": ["div.user-post__text"],
+    "posted_on": ["span.user-post__published > time:nth-child(1)", "datetime"],
+    "bought_on": ["span.user-post__published > time:nth-child(2)", "datetime"],
+    "useful_for": ["button.vote-yes > span"],
+    "useless_for": ["button.vote-no > span"],
+    "pros": ["div.review-feature__title--positives ~ div.review-feature__item", None, True],
+    "cons": ["div.review-feature__title--negatives ~ div.review-feature__item", None, True]
+}
+
+product_id = input("Please enter the product id: ")
+url = f"https://www.ceneo.pl/{product_id}#tab=reviews"
+
+all_opinions = []
+
+while (url):
+    print(url)
+    response = requests.get(url)
+    page_dom = BeautifulSoup(response.text, "html.parser")
+    opinions = page_dom.select("div.js_product-review")
+
+    for opinion in opinions:
+        single_opinion = {
+            key: get_element(opinion, *values)
+            for key, values in opinion_elements.items() 
+        }
+
+        single_opinion["opinion_id"] = opinion["data-entry-id"]
+        all_opinions.append(single_opinion)
+    try:
+        url = "https://www.ceneo.pl"+get_element(page_dom,"a.pagination__next","href")
+    except TypeError: 
+        url = None
+
+with open(f"opinions/{product_id}.json", "w", encoding="UTF-8") as jf:
+    json.dump(all_opinions, jf, indent=4, ensure_ascii=False)
 
