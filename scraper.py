@@ -1,3 +1,4 @@
+from translate import Translator
 from bs4 import BeautifulSoup
 import requests
 import json
@@ -25,6 +26,10 @@ opinion_elements = {
     "cons": ["div.review-feature__title--negatives ~ div.review-feature__item", None, True]
 }
 
+to_lang = "en"
+from_lang = "pl"
+translator = Translator(to_lang=to_lang, from_lang=from_lang)
+
 product_id = input("Please enter the product id: ")
 url = f"https://www.ceneo.pl/{product_id}#tab=reviews"
 
@@ -41,9 +46,14 @@ while (url):
             key: get_element(opinion, *values)
             for key, values in opinion_elements.items() 
         }
-
         single_opinion["opinion_id"] = opinion["data-entry-id"]
+        single_opinion["rcmd"] = True if single_opinion["rcmd"] == "Polecam" else False if single_opinion["rcmd"] == "Nie polecam" else None
+        single_opinion["score"] = float(single_opinion["score"].split("/")[0].replace(",", "."))
+        single_opinion["useful_for"] = int(single_opinion["useful_for"])
+        single_opinion["useless_for"] = int(single_opinion["useless_for"])
+        single_opinion["content_en"] = translator.translate(single_opinion["content"])
         all_opinions.append(single_opinion)
+
     try:
         url = "https://www.ceneo.pl"+get_element(page_dom,"a.pagination__next","href")
     except TypeError: 
